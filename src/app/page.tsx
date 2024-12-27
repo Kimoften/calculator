@@ -1,6 +1,29 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import {supabase} from "../supabaseClient"
+
+const saveCalculationToDB = async (
+  firstNumber: string,
+  secondNumber: string,
+  operator: string,
+  result: string | number
+) => {
+  const { data, error } = await supabase.from("calculations").insert([
+    {
+      first_number: parseFloat(firstNumber),
+      second_number: parseFloat(secondNumber),
+      operator,
+      result: typeof result === "number" ? result : null,
+    },
+  ]);
+
+  if (error) {
+    console.error("Error saving calculation:", error);
+  } else {
+    console.log("Calculation saved:", data);
+  }
+};
 
 const App: React.FC = () => {
   const [firstCalcNumber, setFirstCalcNumber] = useState<string>("");
@@ -42,16 +65,20 @@ const App: React.FC = () => {
     const firstNumber = parseFloat(firstCalcNumber);
     const secondNumber = parseFloat(secondCalcNumber);
 
+    let calcResult: number | string = "";
+
     if (operator === "+") {
-      setResult(firstNumber + secondNumber);
+      calcResult = firstNumber + secondNumber;
     } else if (operator === "-") {
-      setResult(firstNumber - secondNumber);
+      calcResult = firstNumber - secondNumber;
     } else if (operator === "X") {
-      setResult(firstNumber * secondNumber);
+      calcResult = firstNumber * secondNumber;
     } else if (operator === "/") {
-      setResult(secondNumber !== 0 ? firstNumber / secondNumber : "0으로 나눌 수 없습니다");
+      calcResult = secondNumber !== 0 ? firstNumber / secondNumber : "0으로 나눌 수 없습니다";
     }
 
+    setResult(calcResult);
+    saveCalculationToDB(firstCalcNumber, secondCalcNumber, operator, calcResult);
     setOperator("");
     setSecondCalcNumber("");
   };
